@@ -1,0 +1,30 @@
+{
+  "name": "nodeJs-ejs-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Roc-zhou/nodeJs-ejs-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Roc-zhou/nodeJs-ejs-app/issues"
+  },
+  "homepage": "https://github.com/Roc-zhou/nodeJs-ejs-app#readme",
+  "dependencies": {
+    "koa": "^2.8.1",
+    "koa-ejs": "^4.2.0",
+    "koa-router": "^7.4.0",
+    "koa-static": "^5.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.2"
+  }
+}
