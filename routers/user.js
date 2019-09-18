@@ -1,36 +1,41 @@
 const Router = require('koa-router')
 const router = new Router(); //{ prefix: '/users'}
-const Joi = require('@hapi/joi');
-// const passport = require('koa-passport')
-const verify = require('../utils/validator')
 const { hashCheck, checkPwd } = require('../utils/crypt')
 const { dealDate: $dealDate } = require('../utils/methods')
 
-router.get('/', async (ctx, next) => {
-  await ctx.render('home')
-})
+
+// user model
+const User = require('../models/User');
+
 router.get('/login', async (ctx, next) => {
   await ctx.render('login')
 })
 
 router.post('/login', async (ctx, next) => {
   const { email, password } = ctx.request.body
-  // 输入框不为空
+  // check
   if (!email || !password) {
     return await ctx.render('login', {
       errors: '请填写完整！'
     })
   }
-  // 校验数据库是否存在账号
-  const dbData = await ctx.db('SELECT name FROM user WHERE email = ?', [email])
-  if (dbData.length === 0) {
+
+  // user exist ?
+  const userOnly = await User.findOne({ email: email })
+  if (!userOnly) {
     return await ctx.render('login', {
-      errors: '该邮箱未注册，请先注册！',
-      email,
-      password
-    });
+      errors: '账号不存在！'
+    })
+  } else {
+    // password correct ?
+    const checkPas = await checkPwd(password, userOnly.password)
+    if (checkPas) {
+      return await ctx.render('main')
+    }
+    return await ctx.render('login', {
+      errors: '密码不正确'
+    })
   }
-  return await ctx.render('main')
 })
 
 
@@ -39,27 +44,23 @@ router.get('/register', async (ctx, next) => {
 })
 
 router.post('/register', async (ctx, next) => {
-
   const { name, email, password, password2 } = ctx.request.body
-  const schema = {
-    name: Joi.string().min(3).max(20).required(),
-    email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
-    password: Joi.string().min(6).max(15).required(),
-    password2: Joi.string().min(6).max(15).required()
-  }
 
-  const joiData = verify(schema, ctx.request.body)
-  if (joiData.error) {
+  // check
+  const errorText = () => {
+    return !name ? '请输入名称！'
+      : name.length > 10 ? '名称过长！'
+        : !email ? '请输入邮箱！'
+          : !/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.test(email) ? '请输入正确的邮箱地址！'
+            : !password ? '请输入密码！'
+              // : !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/.test(password) ? '密码6-20个字符，必须同时包含大、小写字母及数字，不可包含特殊字符。'
+              : !password2 ? '请输入确认密码！'
+                : password !== password2 ? '密码不一致'
+                  : ''
+  }
+  if (errorText()) {
     return await ctx.render('register', {
-      errors: joiData.error.details[0].message,
-      name,
-      email,
-      password,
-      password2
-    });
-  } else if (password !== password2) {
-    return await ctx.render('register', {
-      errors: '两次密码不一致，请重新输入！',
+      errors: errorText(),
       name,
       email,
       password,
@@ -67,24 +68,31 @@ router.post('/register', async (ctx, next) => {
     });
   }
 
-  // 校验邮箱是已存在
-  const dbData = await ctx.db('SELECT name FROM user WHERE email = ?', [email])
-  if (dbData.length !== 0) {
+  // email is the only ?
+  const userOnly = await User.findOne({ email: email })
+  if (userOnly) {
     return await ctx.render('register', {
-      errors: '邮箱已经注册！',
+      errors: 'Email already exists',
       name,
       email,
       password,
       password2
     });
   } else {
-    const newPassword = await hashCheck(password),
-      insertUserSql = 'INSERT INTO user (name,email,password,create_time) VALUES (?,?,?,?); '
-    const insertData = await ctx.db(insertUserSql, [name, email, newPassword, $dealDate(new Date())])
-    if (insertData.sqlMessage) throw insertData.sqlMessage
-    return ctx.redirect('/login')
+    const newUser = new User({
+      name,
+      email,
+      password: await hashCheck(password)
+    })
+    try {
+      await newUser.save()
+      ctx.flash.success_msg = '注册成功！请登录'
+      console.log('注册成功！！！！');
+      return ctx.redirect('/login');
+    } catch (e) {
+      console.log(e)
+    }
   }
-
 
 
 })
