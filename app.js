@@ -38,10 +38,7 @@ app.use(bodyParser())
 
 
 app.keys = ['zhou'];
-const CONFIG = {
-  
-}
-app.use(session(CONFIG, app))
+app.use(session(require('./config').sessionConfig, app))
 app.use(flash({
   defaultValue: { success_msg: '' }
 }))
