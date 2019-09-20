@@ -12,12 +12,12 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'password is required!'],
-    validate: {
+    /* validate: {
       validator: function (v) {
         return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/.test(v);
       },
       message: '{VALUE} Incorrect password format'
-    }
+    } */
   },
   date: {
     type: Date,

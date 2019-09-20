@@ -47,7 +47,7 @@ app.use(flash({
 app.use(async (ctx, next) => {
   ctx.state = {
     errors: '',
-    success_msg: ctx.flash.success_msg
+    success_msg: /* ctx.flash.success_msg */ ''
   }
 
   await next();

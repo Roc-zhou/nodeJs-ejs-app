@@ -87,7 +87,7 @@ router.post('/register', async (ctx, next) => {
     try {
       await newUser.save()
       // ctx.flash.success_msg = '注册成功！请登录'
-      console.log('注册成功！！！！');
+      console.log(`${email} 注册成功！！！！`);
       return ctx.redirect('/login');
     } catch (e) {
       console.log(e)
